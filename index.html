@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>翔太さん専用 記録カレンダー v1</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      --amber: #f4b400;
+      --amber-soft: #fff5d6;
+      --blue: #42a5f5;
+      --blue-soft: #e9f5ff;
+      --violet: #a978ea;
+      --violet-soft: #f2eaff;
+      --red: #ef4444;
+      --red-soft: #fee2e2;
+      --green: #10b981;
+      --btn: #111827;
+      --btn-text: #fff;
+      --radius-xl: 22px;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 14px 34px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: clamp(22px, 4vw, 30px);
+      line-height: 1.1;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+
+    .title-wrap p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      background: var(--btn);
+      color: var(--btn-text);
+      border-radius: 16px;
+      padding: 11px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    .btn.secondary {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    .layout {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: minmax(0, 1.7fr) minmax(300px, .9fr);
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,0.7);
+      overflow: hidden;
+    }
+
+    .card-body { padding: 16px; }
+
+    .month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f1f5f9;
+      border-radius: 18px;
+      padding: 8px;
+      margin-bottom: 14px;
+      gap: 10px;
+    }
+
+    .month-label {
+      font-weight: 800;
+      font-size: clamp(20px, 3vw, 28px);
+      letter-spacing: -.02em;
+    }
+
+    .nav-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      border: none;
+      background: #fff;
+      cursor: pointer;
+      font-size: 20px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    }
+
+    .weekdays, .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .weekdays {
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .day {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 18px;
+      min-height: 126px;
+      padding: 8px;
+      cursor: pointer;
+      text-align: left;
+      transition: .18s ease;
+      position: relative;
+    }
+
+    .day:hover {
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
+
+    .day.outside {
+      background: #f8fafc;
+      color: #94a3b8;
+    }
+
+    .day.today {
+      box-shadow: inset 0 0 0 2px rgba(37, 99, 235, .18);
+    }
+
+    .day.needs-input {
+      border-color: rgba(239, 68, 68, .48);
+      background: linear-gradient(180deg, #fff 0%, #fff9f9 100%);
+    }
+
+    .day-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 7px;
+    }
+
+    .day-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 14px;
+      color: #334155;
+    }
+
+    .day.today .day-num {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .status-empty {
+      width: 8px;
+      height: 8px;
+    }
+
+    .tag-list {
+      display: grid;
+      gap: 5px;
+    }
+
+    .tag {
+      width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      border-radius: 9px;
+      padding: 4px 6px;
+      font-size: 10.5px;
+      line-height: 1.2;
+      font-weight: 800;
+    }
+
+    .tag.alcohol { background: var(--amber); color: white; }
+    .tag.workout { background: var(--blue); color: white; }
+    .tag.fx { background: var(--violet); color: white; }
+    .tag.missing { background: var(--red-soft); color: #b91c1c; border: 1px solid rgba(239,68,68,.25); }
+
+    .sidebar {
+      display: grid;
+      gap: 14px;
+      position: sticky;
+      top: 14px;
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      border-radius: 18px;
+      padding: 12px;
+    }
+
+    .stat.alcohol { background: var(--amber-soft); }
+    .stat.workout { background: var(--blue-soft); }
+    .stat.fx { background: var(--violet-soft); }
+    .stat.missing { background: #fff1f2; }
+
+    .stat .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat .value {
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .breakdown-group {
+      margin-top: 14px;
+    }
+
+    .breakdown-title {
+      font-weight: 800;
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+    }
+
+    .chip.workout { background: var(--blue-soft); color: #0369a1; border-color: #dbeafe; }
+    .chip.fx { background: var(--violet-soft); color: #7c3aed; border-color: #ede9fe; }
+
+    .export-box {
+      display: grid;
+      gap: 10px;
+    }
+
+    .export-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .range-box {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 18px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 10px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 5px;
+      font-weight: 700;
+    }
+
+    .field input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #fff;
+    }
+
+    .note {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .28);
+      display: none;
+      align-items: end;
+      justify-content: center;
+      z-index: 40;
+      padding: 0;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .sheet {
+      width: min(720px, 100%);
+      background: #fff;
+      border-radius: 26px 26px 0 0;
+      box-shadow: 0 -18px 40px rgba(15,23,42,.18);
+      max-height: 90vh;
+      overflow: auto;
+      padding-bottom: max(18px, env(safe-area-inset-bottom));
+    }
+
+    .sheet-handle {
+      width: 62px;
+      height: 6px;
+      border-radius: 999px;
+      background: #d1d5db;
+      margin: 10px auto 14px;
+    }
+
+    .sheet-body {
+      padding: 0 16px 18px;
+    }
+
+    .sheet-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .sheet-title {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -.03em;
+      margin: 0;
+    }
+
+    .sheet-sub {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .icon-btn {
+      border: none;
+      background: #f3f4f6;
+      border-radius: 14px;
+      width: 42px;
+      height: 42px;
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    .editor-section {
+      padding: 14px 0;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .editor-section:first-of-type { border-top: none; }
+
+    .editor-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .editor-head h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .editor-badge {
+      font-size: 12px;
+      font-weight: 800;
+      padding: 7px 10px;
+      border-radius: 999px;
+    }
+
+    .editor-badge.alcohol { background: var(--amber-soft); color: #b45309; }
+    .editor-badge.workout { background: var(--blue-soft); color: #0369a1; }
+    .editor-badge.fx { background: var(--violet-soft); color: #7c3aed; }
+
+    .option-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .option-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .opt {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 16px;
+      padding: 12px 10px;
+      cursor: pointer;
+      font-weight: 800;
+      color: #334155;
+      transition: .18s ease;
+      min-height: 50px;
+    }
+
+    .opt.active {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    .sheet-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .danger {
+      background: #fff;
+      color: #b91c1c;
+      border: 1px solid rgba(239,68,68,.2);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      background: #111827;
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      opacity: 0;
+      pointer-events: none;
+      transition: .2s ease;
+      z-index: 80;
+      box-shadow: var(--shadow);
+    }
+
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+    }
+
+    @media (max-width: 680px) {
+      .app { padding: 12px 10px 24px; }
+      .topbar { flex-direction: column; align-items: stretch; }
+      .btn-row { width: 100%; }
+      .btn-row .btn { flex: 1 1 auto; }
+      .day { min-height: 108px; padding: 7px; border-radius: 15px; }
+      .tag { font-size: 10px; padding: 4px 5px; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .export-grid { grid-template-columns: 1fr; }
+      .option-grid, .option-grid.compact, .sheet-actions { grid-template-columns: 1fr; }
+      .sheet-title { font-size: 24px; }
+      .month-label { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="title-wrap">
+        <h1>翔太さん専用 記録カレンダー v1</h1>
+        <p>禁酒・筋トレ・FX勉強を、寝る前にまとめて記録。未入力日は赤表示で見逃し防止。</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn secondary" id="todayBtn">今月</button>
+        <button class="btn" id="quickTodayBtn">今日を入力</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <section class="card">
+        <div class="card-body">
+          <div class="month-nav">
+            <button class="nav-btn" id="prevMonthBtn" aria-label="前月">‹</button>
+            <div class="month-label" id="monthLabel"></div>
+            <button class="nav-btn" id="nextMonthBtn" aria-label="次月">›</button>
+          </div>
+
+          <div class="weekdays" id="weekdays"></div>
+          <div class="calendar" id="calendar"></div>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <section class="card">
+          <div class="card-body">
+            <h2 class="section-title">月次サマリー</h2>
+            <div class="stats">
+              <div class="stat alcohol">
+                <div class="label">禁酒達成日数</div>
+                <div class="value" id="summaryAlcohol">0</div>
+              </div>
+              <div class="stat workout">
+                <div class="label">筋トレ実施日数</div>
+                <div class="value" id="summaryWorkout">0</div>
+              </div>
+              <div class="stat fx">
+                <div class="label">FX勉強実施日数</div>
+                <div class="value" id="summaryFx">0</div>
+              </div>
+              <div class="stat missing">
+                <div class="label">要入力日数</div>
+                <div class="value" id="summaryMissing">0</div>
+              </div>
+            </div>
+
+            <div class="breakdown-group">
+              <div class="breakdown-title">筋トレ内訳</div>
+              <div class="chips" id="workoutBreakdown"></div>
+            </div>
+
+            <div class="breakdown-group">
+              <div class="breakdown-title">FX勉強内訳</div>
+              <div class="chips" id="fxBreakdown"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-body export-box">
+            <h2 class="section-title">CSV / AI説明 出力</h2>
+            <div class="export-grid">
+              <button class="btn" id="exportMonthCsv">今月CSV</button>
+              <button class="btn secondary" id="exportMonthGuide">今月AI説明</button>
+              <button class="btn" id="exportAllCsv">全期間CSV</button>
+              <button class="btn secondary" id="exportAllGuide">全期間AI説明</button>
+            </div>
+
+            <div class="range-box">
+              <div class="field">
+                <label for="rangeStart">開始日</label>
+                <input id="rangeStart" type="date" />
+              </div>
+              <div class="field">
+                <label for="rangeEnd">終了日</label>
+                <input id="rangeEnd" type="date" />
+              </div>
+              <div class="export-grid">
+                <button class="btn" id="exportRangeCsv">期間指定CSV</button>
+                <button class="btn secondary" id="exportRangeGuide">期間指定AI説明</button>
+              </div>
+            </div>
+
+            <div class="export-grid">
+              <button class="btn secondary" id="copyMonthPrompt">今月分析文をコピー</button>
+              <button class="btn secondary" id="copyAllPrompt">全期間分析文をコピー</button>
+            </div>
+
+            <div class="note">
+              CSVは日本語列名で出力。<br>
+              AI説明は別テキストで出力。<br>
+              <strong>未入力</strong> と <strong>なし</strong> は別扱いで、実施日数に未入力は絶対に入らない設計です。
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="sheet-handle"></div>
+      <div class="sheet-body">
+        <div class="sheet-top">
+          <div>
+            <h2 class="sheet-title" id="sheetTitle">記録入力</h2>
+            <p class="sheet-sub" id="sheetSub"></p>
+          </div>
+          <button class="icon-btn" id="closeModalBtn" aria-label="閉じる">✕</button>
+        </div>
+
+        <section class="editor-section">
+          <div class="editor-head">
+            <h3>禁酒</h3>
+            <span class="editor-badge alcohol">黄色表示</span>
+          </div>
+          <div class="option-grid compact" id="alcoholOptions"></div>
+        </section>
+
+        <section class="editor-section">
+          <div class="editor-head">
+            <h3>筋トレ</h3>
+            <span class="editor-badge workout">青色表示</span>
+          </div>
+          <div class="option-grid" id="workoutOptions"></div>
+        </section>
+
+        <section class="editor-section">
+          <div class="editor-head">
+            <h3>FX勉強</h3>
+            <span class="editor-badge fx">紫色表示</span>
+          </div>
+          <div class="option-grid" id="fxOptions"></div>
+        </section>
+
+        <div class="sheet-actions">
+          <button class="btn secondary" id="clearDayBtn">この日の入力をクリア</button>
+          <button class="btn danger" id="closeDoneBtn">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = 'shota_habit_calendar_v1_html';
+    const WEEKDAYS = ['月', '火', '水', '木', '金', '土', '日'];
+
+    const ALCOHOL_OPTIONS = [
+      { value: 'success', label: '達成' },
+      { value: 'fail', label: '未達' },
+    ];
+
+    const WORKOUT_OPTIONS = [
+      { value: 'none', label: 'なし' },
+      { value: 'basic', label: '筋トレ' },
+      { value: 'fullBody', label: '筋トレ:全身' },
+      { value: 'legs', label: '筋トレ:脚' },
+      { value: 'abs', label: '筋トレ:腹筋' },
+    ];
+
+    const FX_OPTIONS = [
+      { value: 'none', label: 'なし' },
+      { value: 'level1', label: 'FX勉強○' },
+      { value: 'level2', label: 'FX勉強○○' },
+      { value: 'level3', label: 'FX勉強○○○' },
+    ];
+
+    const NO_ALCOHOL_LABEL_MAP = { success: '達成', fail: '未達' };
+    const WORKOUT_LABEL_MAP = { none: 'なし', basic: '筋トレ', fullBody: '筋トレ:全身', legs: '筋トレ:脚', abs: '筋トレ:腹筋' };
+    const FX_LABEL_MAP = { none: 'なし', level1: 'FX勉強○', level2: 'FX勉強○○', level3: 'FX勉強○○○' };
+
+    const state = {
+      records: loadRecords(),
+      currentMonth: startOfMonth(new Date()),
+      selectedDate: formatDate(new Date()),
+    };
+
+    const els = {
+      monthLabel: document.getElementById('monthLabel'),
+      weekdays: document.getElementById('weekdays'),
+      calendar: document.getElementById('calendar'),
+      prevMonthBtn: document.getElementById('prevMonthBtn'),
+      nextMonthBtn: document.getElementById('nextMonthBtn'),
+      todayBtn: document.getElementById('todayBtn'),
+      quickTodayBtn: document.getElementById('quickTodayBtn'),
+      summaryAlcohol: document.getElementById('summaryAlcohol'),
+      summaryWorkout: document.getElementById('summaryWorkout'),
+      summaryFx: document.getElementById('summaryFx'),
+      summaryMissing: document.getElementById('summaryMissing'),
+      workoutBreakdown: document.getElementById('workoutBreakdown'),
+      fxBreakdown: document.getElementById('fxBreakdown'),
+      exportMonthCsv: document.getElementById('exportMonthCsv'),
+      exportMonthGuide: document.getElementById('exportMonthGuide'),
+      exportAllCsv: document.getElementById('exportAllCsv'),
+      exportAllGuide: document.getElementById('exportAllGuide'),
+      exportRangeCsv: document.getElementById('exportRangeCsv'),
+      exportRangeGuide: document.getElementById('exportRangeGuide'),
+      copyMonthPrompt: document.getElementById('copyMonthPrompt'),
+      copyAllPrompt: document.getElementById('copyAllPrompt'),
+      rangeStart: document.getElementById('rangeStart'),
+      rangeEnd: document.getElementById('rangeEnd'),
+      modalBackdrop: document.getElementById('modalBackdrop'),
+      closeModalBtn: document.getElementById('closeModalBtn'),
+      closeDoneBtn: document.getElementById('closeDoneBtn'),
+      clearDayBtn: document.getElementById('clearDayBtn'),
+      sheetTitle: document.getElementById('sheetTitle'),
+      sheetSub: document.getElementById('sheetSub'),
+      alcoholOptions: document.getElementById('alcoholOptions'),
+      workoutOptions: document.getElementById('workoutOptions'),
+      fxOptions: document.getElementById('fxOptions'),
+      toast: document.getElementById('toast'),
+    };
+
+    function loadRecords() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveRecords() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.records));
+    }
+
+    function emptyRecord(date) {
+      return {
+        date,
+        noAlcoholStatus: null,
+        workoutStatus: null,
+        fxStudyStatus: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    function getRecord(date) {
+      return state.records[date] || emptyRecord(date);
+    }
+
+    function updateRecord(date, patch) {
+      const base = getRecord(date);
+      state.records[date] = {
+        ...base,
+        ...patch,
+        updatedAt: new Date().toISOString(),
+      };
+      saveRecords();
+      render();
+      renderModal();
+    }
+
+    function clearDay(date) {
+      delete state.records[date];
+      saveRecords();
+      render();
+      renderModal();
+    }
+
+    function startOfMonth(date) {
+      return new Date(date.getFullYear(), date.getMonth(), 1);
+    }
+
+    function endOfMonth(date) {
+      return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    }
+
+    function addMonths(date, amount) {
+      return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+    }
+
+    function startOfWeek(date) {
+      const day = date.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      const d = new Date(date);
+      d.setDate(d.getDate() + diff);
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+
+    function endOfWeek(date) {
+      const start = startOfWeek(date);
+      const d = new Date(start);
+      d.setDate(d.getDate() + 6);
+      return d;
+    }
+
+    function addDays(date, amount) {
+      const d = new Date(date);
+      d.setDate(d.getDate() + amount);
+      return d;
+    }
+
+    function formatDate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseDate(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function formatMonthLabel(date) {
+      return `${date.getFullYear()}年${date.getMonth() + 1}月`;
+    }
+
+    function isSameDay(a, b) {
+      return formatDate(a) === formatDate(b);
+    }
+
+    function isSameMonth(a, b) {
+      return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+    }
+
+    function isWorkoutPositive(status) {
+      return ['basic', 'fullBody', 'legs', 'abs'].includes(status);
+    }
+
+    function isFxPositive(status) {
+      return ['level1', 'level2', 'level3'].includes(status);
+    }
+
+    function isComplete(record) {
+      return !!record.noAlcoholStatus && !!record.workoutStatus && !!record.fxStudyStatus;
+    }
+
+    function needsInput(dateKey, record) {
+      const today = formatDate(new Date());
+      return dateKey <= today && !isComplete(record);
+    }
+
+    function getMonthRecords(date) {
+      const prefix = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      return Object.values(state.records)
+        .filter(r => r.date.startsWith(prefix))
+        .sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    function getAllRecords() {
+      return Object.values(state.records).sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    function getRangeRecords(start, end) {
+      return getAllRecords().filter(r => r.date >= start && r.date <= end);
+    }
+
+    function buildCsv(records) {
+      const rows = [
+        ['日付', '禁酒', '筋トレ', 'FX勉強'],
+        ...records.map(r => [
+          r.date,
+          r.noAlcoholStatus ? NO_ALCOHOL_LABEL_MAP[r.noAlcoholStatus] : '未入力',
+          r.workoutStatus ? WORKOUT_LABEL_MAP[r.workoutStatus] : '未入力',
+          r.fxStudyStatus ? FX_LABEL_MAP[r.fxStudyStatus] : '未入力',
+        ])
+      ];
+      return rows.map(row => row.map(escapeCsv).join(',')).join('\n');
+    }
+
+    function escapeCsv(value) {
+      const text = String(value ?? '');
+      if (text.includes(',') || text.includes('\n') || text.includes('"')) {
+        return '"' + text.replace(/"/g, '""') + '"';
+      }
+      return text;
+    }
+
+    function buildAiGuide(targetLabel, count) {
+      return [
+        `対象期間：${targetLabel}`,
+        '',
+        'このCSVの列定義：',
+        '- 日付：YYYY-MM-DD',
+        '- 禁酒：達成 / 未達 / 未入力',
+        '- 筋トレ：未入力 / なし / 筋トレ / 筋トレ:全身 / 筋トレ:脚 / 筋トレ:腹筋',
+        '- FX勉強：未入力 / なし / FX勉強○ / FX勉強○○ / FX勉強○○○',
+        '',
+        '分析時の注意：',
+        '- 未入力は未記録であり、実施なしとは別です。',
+        '- 禁酒達成日数は「達成」のみを集計します。',
+        '- 筋トレ実施日数は「筋トレ / 筋トレ:全身 / 筋トレ:脚 / 筋トレ:腹筋」のみを集計し、「なし」「未入力」は集計しません。',
+        '- FX勉強実施日数は「FX勉強○ / FX勉強○○ / FX勉強○○○」のみを集計し、「なし」「未入力」は集計しません。',
+        '',
+        `CSV件数：${count}件`,
+      ].join('\n');
+    }
+
+    function buildPrompt(label, records) {
+      return [
+        '以下は習慣記録CSVです。事実ベースで分析してください。推定は推定と明記してください。',
+        '',
+        buildAiGuide(label, records.length),
+        '',
+        'CSV:',
+        buildCsv(records),
+      ].join('\n');
+    }
+
+    function downloadFile(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function showToast(text) {
+      els.toast.textContent = text;
+      els.toast.classList.add('show');
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => els.toast.classList.remove('show'), 1500);
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const area = document.createElement('textarea');
+        area.value = text;
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        document.body.removeChild(area);
+      }
+      showToast('コピーしたよ');
+    }
+
+    function initWeekdays() {
+      els.weekdays.innerHTML = WEEKDAYS.map(day => `<div>${day}</div>`).join('');
+    }
+
+    function renderCalendar() {
+      els.monthLabel.textContent = formatMonthLabel(state.currentMonth);
+
+      const first = startOfMonth(state.currentMonth);
+      const last = endOfMonth(state.currentMonth);
+      const start = startOfWeek(first);
+      const end = endOfWeek(last);
+
+      let html = '';
+      for (let day = new Date(start); day <= end; day = addDays(day, 1)) {
+        const dateKey = formatDate(day);
+        const record = getRecord(dateKey);
+        const outside = !isSameMonth(day, state.currentMonth);
+        const today = isSameDay(day, new Date());
+        const missing = !outside && needsInput(dateKey, record);
+        const complete = isComplete(record);
+        const tags = [];
+
+        if (missing) tags.push(`<div class="tag missing">未入力</div>`);
+        if (record.noAlcoholStatus === 'success') tags.push(`<div class="tag alcohol">禁酒</div>`);
+        if (isWorkoutPositive(record.workoutStatus)) tags.push(`<div class="tag workout">${WORKOUT_LABEL_MAP[record.workoutStatus]}</div>`);
+        if (isFxPositive(record.fxStudyStatus)) tags.push(`<div class="tag fx">${FX_LABEL_MAP[record.fxStudyStatus]}</div>`);
+        if (tags.length === 0) tags.push('<div style="height:18px"></div>');
+
+        html += `
+          <button class="day ${outside ? 'outside' : ''} ${today ? 'today' : ''} ${missing ? 'needs-input' : ''}" data-date="${dateKey}">
+            <div class="day-top">
+              <div class="day-num">${day.getDate()}</div>
+              ${complete && !outside ? '<div class="status-dot"></div>' : '<div class="status-empty"></div>'}
+            </div>
+            <div class="tag-list">${tags.join('')}</div>
+          </button>
+        `;
+      }
+
+      els.calendar.innerHTML = html;
+      els.calendar.querySelectorAll('.day').forEach(btn => {
+        btn.addEventListener('click', () => openModal(btn.dataset.date));
+      });
+    }
+
+    function renderSummary() {
+      const currentMonthRecords = getMonthRecords(state.currentMonth);
+      const alcoholDays = currentMonthRecords.filter(r => r.noAlcoholStatus === 'success').length;
+      const workoutDays = currentMonthRecords.filter(r => isWorkoutPositive(r.workoutStatus)).length;
+      const fxDays = currentMonthRecords.filter(r => isFxPositive(r.fxStudyStatus)).length;
+
+      const monthStart = startOfMonth(state.currentMonth);
+      const monthEnd = endOfMonth(state.currentMonth);
+      let missingCount = 0;
+      const todayKey = formatDate(new Date());
+      for (let day = new Date(monthStart); day <= monthEnd; day = addDays(day, 1)) {
+        const dateKey = formatDate(day);
+        if (dateKey > todayKey) continue;
+        if (needsInput(dateKey, getRecord(dateKey))) missingCount++;
+      }
+
+      els.summaryAlcohol.textContent = alcoholDays;
+      els.summaryWorkout.textContent = workoutDays;
+      els.summaryFx.textContent = fxDays;
+      els.summaryMissing.textContent = missingCount;
+
+      const workoutBreakdown = {
+        '筋トレ': currentMonthRecords.filter(r => r.workoutStatus === 'basic').length,
+        '全身': currentMonthRecords.filter(r => r.workoutStatus === 'fullBody').length,
+        '脚': currentMonthRecords.filter(r => r.workoutStatus === 'legs').length,
+        '腹筋': currentMonthRecords.filter(r => r.workoutStatus === 'abs').length,
+      };
+      const fxBreakdown = {
+        '○': currentMonthRecords.filter(r => r.fxStudyStatus === 'level1').length,
+        '○○': currentMonthRecords.filter(r => r.fxStudyStatus === 'level2').length,
+        '○○○': currentMonthRecords.filter(r => r.fxStudyStatus === 'level3').length,
+      };
+
+      els.workoutBreakdown.innerHTML = Object.entries(workoutBreakdown)
+        .map(([key, value]) => `<span class="chip workout">${key} ${value}日</span>`)
+        .join('');
+
+      els.fxBreakdown.innerHTML = Object.entries(fxBreakdown)
+        .map(([key, value]) => `<span class="chip fx">${key} ${value}日</span>`)
+        .join('');
+    }
+
+    function renderModal() {
+      const record = getRecord(state.selectedDate);
+      const dateObj = parseDate(state.selectedDate);
+      els.sheetTitle.textContent = `${state.selectedDate} の記録`;
+      els.sheetSub.textContent = `${dateObj.getMonth() + 1}月${dateObj.getDate()}日。未入力の日は赤表示。あとから埋めればOK。`;
+
+      renderOptionGroup(els.alcoholOptions, ALCOHOL_OPTIONS, record.noAlcoholStatus, value => updateRecord(state.selectedDate, { noAlcoholStatus: value }));
+      renderOptionGroup(els.workoutOptions, WORKOUT_OPTIONS, record.workoutStatus, value => updateRecord(state.selectedDate, { workoutStatus: value }));
+      renderOptionGroup(els.fxOptions, FX_OPTIONS, record.fxStudyStatus, value => updateRecord(state.selectedDate, { fxStudyStatus: value }));
+    }
+
+    function renderOptionGroup(container, options, selected, onClick) {
+      container.innerHTML = options.map(opt => `
+        <button class="opt ${selected === opt.value ? 'active' : ''}" data-value="${opt.value}">${opt.label}</button>
+      `).join('');
+      container.querySelectorAll('.opt').forEach(btn => {
+        btn.addEventListener('click', () => onClick(btn.dataset.value));
+      });
+    }
+
+    function openModal(date) {
+      state.selectedDate = date;
+      renderModal();
+      els.modalBackdrop.classList.add('open');
+      els.modalBackdrop.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal() {
+      els.modalBackdrop.classList.remove('open');
+      els.modalBackdrop.setAttribute('aria-hidden', 'true');
+    }
+
+    function setRangeInputsToCurrentMonth() {
+      els.rangeStart.value = formatDate(startOfMonth(state.currentMonth));
+      els.rangeEnd.value = formatDate(endOfMonth(state.currentMonth));
+    }
+
+    function exportCsv(kind) {
+      const { label, records, filename } = getExportPayload(kind);
+      downloadFile(filename, buildCsv(records), 'text/csv;charset=utf-8');
+      showToast(`${label} CSVを保存`);
+    }
+
+    function exportGuide(kind) {
+      const { label, records, filename } = getExportPayload(kind, true);
+      downloadFile(filename, buildAiGuide(label, records.length), 'text/plain;charset=utf-8');
+      showToast(`${label} AI説明を保存`);
+    }
+
+    function getExportPayload(kind, guide = false) {
+      if (kind === 'month') {
+        const label = formatMonthLabel(state.currentMonth);
+        const records = getMonthRecords(state.currentMonth);
+        const suffix = `${state.currentMonth.getFullYear()}-${String(state.currentMonth.getMonth() + 1).padStart(2, '0')}`;
+        return { label, records, filename: guide ? `habit_log_ai_guide_${suffix}.txt` : `habit_log_${suffix}.csv` };
+      }
+      if (kind === 'all') {
+        const label = '全期間';
+        const records = getAllRecords();
+        return { label, records, filename: guide ? 'habit_log_ai_guide_all.txt' : 'habit_log_all.csv' };
+      }
+      const start = els.rangeStart.value;
+      const end = els.rangeEnd.value;
+      const label = `${start} 〜 ${end}`;
+      const records = getRangeRecords(start, end);
+      return { label, records, filename: guide ? `habit_log_ai_guide_${start}_to_${end}.txt` : `habit_log_${start}_to_${end}.csv` };
+    }
+
+    function render() {
+      renderCalendar();
+      renderSummary();
+      setRangeInputsToCurrentMonth();
+    }
+
+    function bindEvents() {
+      els.prevMonthBtn.addEventListener('click', () => {
+        state.currentMonth = addMonths(state.currentMonth, -1);
+        render();
+      });
+
+      els.nextMonthBtn.addEventListener('click', () => {
+        state.currentMonth = addMonths(state.currentMonth, 1);
+        render();
+      });
+
+      els.todayBtn.addEventListener('click', () => {
+        state.currentMonth = startOfMonth(new Date());
+        render();
+      });
+
+      els.quickTodayBtn.addEventListener('click', () => {
+        state.currentMonth = startOfMonth(new Date());
+        render();
+        openModal(formatDate(new Date()));
+      });
+
+      els.closeModalBtn.addEventListener('click', closeModal);
+      els.closeDoneBtn.addEventListener('click', closeModal);
+      els.modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === els.modalBackdrop) closeModal();
+      });
+
+      els.clearDayBtn.addEventListener('click', () => {
+        clearDay(state.selectedDate);
+        showToast('この日の入力をクリア');
+      });
+
+      els.exportMonthCsv.addEventListener('click', () => exportCsv('month'));
+      els.exportMonthGuide.addEventListener('click', () => exportGuide('month'));
+      els.exportAllCsv.addEventListener('click', () => exportCsv('all'));
+      els.exportAllGuide.addEventListener('click', () => exportGuide('all'));
+      els.exportRangeCsv.addEventListener('click', () => exportCsv('range'));
+      els.exportRangeGuide.addEventListener('click', () => exportGuide('range'));
+      els.copyMonthPrompt.addEventListener('click', () => {
+        const { label, records } = getExportPayload('month');
+        copyText(buildPrompt(label, records));
+      });
+      els.copyAllPrompt.addEventListener('click', () => {
+        const { label, records } = getExportPayload('all');
+        copyText(buildPrompt(label, records));
+      });
+    }
+
+    initWeekdays();
+    bindEvents();
+    render();
+  </script>
+</body>
+</html>
