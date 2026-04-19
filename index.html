@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#f4f5f7" />
-  <title>翔太さん専用 記録カレンダー v2.1</title>
+  <title>翔太さん専用 記録カレンダー v3</title>
   <style>
     :root {
       --bg: #f4f5f7;
@@ -354,6 +354,18 @@
       font-weight: 900;
       letter-spacing: -.02em;
     }
+    .summary-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .summary-meta {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 800;
+    }
     .pill-list { display: flex; flex-wrap: wrap; gap: 8px; }
     .mini-pill {
       padding: 7px 11px;
@@ -510,33 +522,68 @@
       </div>
     </section>
 
-    <section class="screen" id="screen-summary">
+    
+<section class="screen" id="screen-summary">
       <div class="card">
-        <h2 class="section-title">月次サマリー</h2>
+        <div class="summary-head">
+          <h2 class="section-title">週間サマリー</h2>
+          <div class="summary-meta" id="weekRangeLabel">月〜日</div>
+        </div>
         <div class="stats-grid">
           <div class="stat-box alcohol">
             <h3>禁酒達成日数</h3>
-            <div class="num" id="statAlcohol">0</div>
+            <div class="num" id="weekAlcohol">0/7</div>
           </div>
           <div class="stat-box workout">
             <h3>筋トレ実施日数</h3>
-            <div class="num" id="statWorkout">0</div>
+            <div class="num" id="weekWorkout">0/7</div>
           </div>
           <div class="stat-box fx">
             <h3>FX勉強実施日数</h3>
-            <div class="num" id="statFx">0</div>
+            <div class="num" id="weekFx">0/7</div>
           </div>
           <div class="stat-box missing">
             <h3>要入力日数</h3>
-            <div class="num" id="statMissing">0</div>
+            <div class="num" id="weekMissing">0件</div>
           </div>
         </div>
 
         <div class="sub-title">筋トレ内訳</div>
-        <div class="pill-list" id="workoutBreakdown"></div>
+        <div class="pill-list" id="weekWorkoutBreakdown"></div>
 
         <div class="sub-title">FX勉強内訳</div>
-        <div class="pill-list" id="fxBreakdown"></div>
+        <div class="pill-list" id="weekFxBreakdown"></div>
+      </div>
+
+      <div class="card">
+        <div class="summary-head">
+          <h2 class="section-title">月次サマリー</h2>
+          <div class="summary-meta" id="monthRangeLabel">今月</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-box alcohol">
+            <h3>禁酒達成日数</h3>
+            <div class="num" id="monthAlcohol">0/30</div>
+          </div>
+          <div class="stat-box workout">
+            <h3>筋トレ実施日数</h3>
+            <div class="num" id="monthWorkout">0/30</div>
+          </div>
+          <div class="stat-box fx">
+            <h3>FX勉強実施日数</h3>
+            <div class="num" id="monthFx">0/30</div>
+          </div>
+          <div class="stat-box missing">
+            <h3>要入力日数</h3>
+            <div class="num" id="monthMissing">0件</div>
+          </div>
+        </div>
+
+        <div class="sub-title">筋トレ内訳</div>
+        <div class="pill-list" id="monthWorkoutBreakdown"></div>
+
+        <div class="sub-title">FX勉強内訳</div>
+        <div class="pill-list" id="monthFxBreakdown"></div>
       </div>
     </section>
 
@@ -583,7 +630,7 @@
         </div>
 
         <div class="helper-box">
-          CSVは日本語列名で出力。AI説明は別テキストで出力。未入力と「なし」は別扱いで、実施日数に未入力は絶対に入らない設計です。
+          CSVは日本語列名で出力。AI説明は別テキストで出力。未入力と「なし」は別扱い。v3では旧バージョンの記録も自動引継ぎ対応。
         </div>
       </div>
     </section>
@@ -592,7 +639,13 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const STORAGE_KEY = 'shota_habit_calendar_v2_1';
+    const STORAGE_KEY = 'shota_habit_calendar_data';
+const OLD_KEYS = [
+  'shota_habit_calendar_v1_html',
+  'shota_habit_calendar_v2',
+  'shota_habit_calendar_v2_1',
+];
+
 
     const alcoholOptions = [
       { value: 'success', label: '達成' },
@@ -623,6 +676,7 @@
       currentMonth: startOfMonth(new Date()),
       selectedDate: formatDate(new Date()),
       screen: 'calendar',
+      migratedFrom: null,
     };
 
     const $ = (id) => document.getElementById(id);
@@ -683,21 +737,37 @@
     }
 
     function saveRecords() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.records));
-    }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.records));
+}
 
-    function loadRecords() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === 'object') state.records = parsed;
-      } catch (e) {
-        console.error(e);
+function loadRecords() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        state.records = parsed;
+        return;
       }
     }
 
-    function isToday(dateStr) {
+    for (const oldKey of OLD_KEYS) {
+      const oldRaw = localStorage.getItem(oldKey);
+      if (!oldRaw) continue;
+      const parsed = JSON.parse(oldRaw);
+      if (parsed && typeof parsed === 'object') {
+        state.records = parsed;
+        state.migratedFrom = oldKey;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        return;
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function isToday(dateStr) {
       return dateStr === formatDate(new Date());
     }
 
@@ -754,34 +824,77 @@
     }
 
     function getMonthRecords() {
-      const prefix = `${state.currentMonth.getFullYear()}-${String(state.currentMonth.getMonth() + 1).padStart(2, '0')}`;
-      return Object.values(state.records)
-        .filter(r => r.date.startsWith(prefix))
-        .sort((a, b) => a.date.localeCompare(b.date));
-    }
+  const start = startOfMonth(state.currentMonth);
+  const end = endOfMonth(state.currentMonth);
+  const records = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    records.push(getRecord(formatDate(d)));
+  }
+  return records;
+}
 
-    function summarizeMonth() {
-      const monthRecords = getMonthRecords();
-      return {
-        alcohol: monthRecords.filter(r => r.noAlcoholStatus === 'success').length,
-        workout: monthRecords.filter(workoutPositive).length,
-        fx: monthRecords.filter(fxPositive).length,
-        missing: monthRecords.filter(r => hasMissing(r, r.date)).length,
-        workoutBreakdown: {
-          '筋トレ': monthRecords.filter(r => r.workoutStatus === 'basic').length,
-          '全身': monthRecords.filter(r => r.workoutStatus === 'fullBody').length,
-          '脚': monthRecords.filter(r => r.workoutStatus === 'legs').length,
-          '腹筋': monthRecords.filter(r => r.workoutStatus === 'abs').length,
-        },
-        fxBreakdown: {
-          '○': monthRecords.filter(r => r.fxStudyStatus === 'level1').length,
-          '○○': monthRecords.filter(r => r.fxStudyStatus === 'level2').length,
-          '○○○': monthRecords.filter(r => r.fxStudyStatus === 'level3').length,
-        },
-      };
-    }
+function daysInMonth(date) {
+  return endOfMonth(date).getDate();
+}
 
-    function sortedRecords() {
+function getWeekBounds(dateStr) {
+  const base = parseDateKey(dateStr);
+  const start = new Date(base);
+  start.setDate(base.getDate() - mondayIndex(base));
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start, end };
+}
+
+function summarizeRecords(records) {
+  return {
+    alcohol: records.filter(r => r.noAlcoholStatus === 'success').length,
+    workout: records.filter(workoutPositive).length,
+    fx: records.filter(fxPositive).length,
+    missing: records.filter(r => hasMissing(r, r.date)).length,
+    workoutBreakdown: {
+      '筋トレ': records.filter(r => r.workoutStatus === 'basic').length,
+      '全身': records.filter(r => r.workoutStatus === 'fullBody').length,
+      '脚': records.filter(r => r.workoutStatus === 'legs').length,
+      '腹筋': records.filter(r => r.workoutStatus === 'abs').length,
+    },
+    fxBreakdown: {
+      '○': records.filter(r => r.fxStudyStatus === 'level1').length,
+      '○○': records.filter(r => r.fxStudyStatus === 'level2').length,
+      '○○○': records.filter(r => r.fxStudyStatus === 'level3').length,
+    },
+  };
+}
+
+function summarizeMonth() {
+  const records = getMonthRecords();
+  return {
+    totalDays: daysInMonth(state.currentMonth),
+    ...summarizeRecords(records),
+  };
+}
+
+function summarizeWeek() {
+  const { start, end } = getWeekBounds(state.selectedDate);
+  const records = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    records.push(getRecord(formatDate(d)));
+  }
+  return {
+    start,
+    end,
+    totalDays: 7,
+    ...summarizeRecords(records),
+  };
+}
+
+function weekRangeLabel(start, end) {
+  const startText = `${start.getMonth() + 1}/${start.getDate()}`;
+  const endText = `${end.getMonth() + 1}/${end.getDate()}`;
+  return `${startText}〜${endText}（月〜日）`;
+}
+
+function sortedRecords() {
       return Object.values(state.records).sort((a, b) => a.date.localeCompare(b.date));
     }
 
@@ -919,19 +1032,31 @@
     }
 
     function renderSummary() {
-      const s = summarizeMonth();
-      $('statAlcohol').textContent = s.alcohol;
-      $('statWorkout').textContent = s.workout;
-      $('statFx').textContent = s.fx;
-      $('statMissing').textContent = s.missing;
+  const week = summarizeWeek();
+  const month = summarizeMonth();
 
-      $('workoutBreakdown').innerHTML = Object.entries(s.workoutBreakdown)
-        .map(([k, v]) => `<div class="mini-pill workout">${k} ${v}日</div>`).join('');
-      $('fxBreakdown').innerHTML = Object.entries(s.fxBreakdown)
-        .map(([k, v]) => `<div class="mini-pill fx">${k} ${v}日</div>`).join('');
-    }
+  $('weekRangeLabel').textContent = weekRangeLabel(week.start, week.end);
+  $('weekAlcohol').textContent = `${week.alcohol}/${week.totalDays}`;
+  $('weekWorkout').textContent = `${week.workout}/${week.totalDays}`;
+  $('weekFx').textContent = `${week.fx}/${week.totalDays}`;
+  $('weekMissing').textContent = `${week.missing}件`;
+  $('weekWorkoutBreakdown').innerHTML = Object.entries(week.workoutBreakdown)
+    .map(([k, v]) => `<div class="mini-pill workout">${k} ${v}日</div>`).join('');
+  $('weekFxBreakdown').innerHTML = Object.entries(week.fxBreakdown)
+    .map(([k, v]) => `<div class="mini-pill fx">${k} ${v}日</div>`).join('');
 
-    function renderTabs() {
+  $('monthRangeLabel').textContent = `${jpMonth(state.currentMonth)}（全${month.totalDays}日）`;
+  $('monthAlcohol').textContent = `${month.alcohol}/${month.totalDays}`;
+  $('monthWorkout').textContent = `${month.workout}/${month.totalDays}`;
+  $('monthFx').textContent = `${month.fx}/${month.totalDays}`;
+  $('monthMissing').textContent = `${month.missing}件`;
+  $('monthWorkoutBreakdown').innerHTML = Object.entries(month.workoutBreakdown)
+    .map(([k, v]) => `<div class="mini-pill workout">${k} ${v}日</div>`).join('');
+  $('monthFxBreakdown').innerHTML = Object.entries(month.fxBreakdown)
+    .map(([k, v]) => `<div class="mini-pill fx">${k} ${v}日</div>`).join('');
+}
+
+function renderTabs() {
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.screen === state.screen);
       });
@@ -1056,6 +1181,9 @@
       bindEvents();
       setupExportDefaults();
       render();
+      if (state.migratedFrom) {
+        setTimeout(() => showToast('旧バージョンの記録を引き継ぎました'), 220);
+      }
     }
 
     init();
