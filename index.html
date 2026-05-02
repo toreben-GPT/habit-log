@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#f4f5f7" />
-  <title>翔太さん専用 記録カレンダー v3</title>
+  <title>翔太さん専用 記録カレンダー v4</title>
   <style>
     :root {
       --bg: #f4f5f7;
@@ -117,6 +117,106 @@
       color: #fff;
       border-color: var(--navy);
     }
+
+    .filter-card {
+      background: rgba(255,255,255,.82);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 8px;
+      margin-top: 12px;
+      box-shadow: 0 2px 10px rgba(17, 24, 39, 0.04);
+    }
+    .filter-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+    .filter-btn {
+      min-height: 36px;
+      border: 1px solid transparent;
+      border-radius: 13px;
+      background: #f6f7f9;
+      color: #697180;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .filter-btn.active {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+    }
+    .filter-btn:active { transform: scale(.98); }
+
+    .period-controls {
+      display: grid;
+      grid-template-columns: 40px 1fr 40px;
+      gap: 8px;
+      align-items: center;
+      margin: 8px 0 12px;
+    }
+    .period-main {
+      min-height: 40px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+    }
+    .period-input {
+      width: 100%;
+      min-height: 40px;
+      border-radius: 13px;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 0 10px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #4d5563;
+    }
+    .mini-action {
+      min-height: 40px;
+      border-radius: 13px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #4d5563;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 0 10px;
+      white-space: nowrap;
+    }
+
+    .goal-grid {
+      display: grid;
+      gap: 8px;
+      margin: 8px 0 14px;
+    }
+    .goal-card {
+      border-radius: 16px;
+      background: #f7f8fa;
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+    }
+    .goal-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 7px;
+    }
+    .goal-name { font-size: 13px; font-weight: 950; color: #3d4655; }
+    .goal-value { font-size: 13px; font-weight: 950; color: var(--navy); }
+    .goal-message { font-size: 12px; font-weight: 850; color: var(--muted); }
+    .goal-message.done { color: #0f9f6e; }
+    .goal-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #e8ebf0;
+      overflow: hidden;
+    }
+    .goal-fill { height: 100%; border-radius: 999px; width: 0%; }
+    .goal-fill.alcohol { background: var(--amber); }
+    .goal-fill.workout { background: var(--blue); }
+    .goal-fill.fx { background: var(--violet); }
 
     .screen { display: none; }
     .screen.active { display: block; }
@@ -473,6 +573,15 @@
     </div>
 
     <section class="screen active" id="screen-calendar">
+      <div class="filter-card">
+        <div class="filter-row">
+          <button class="filter-btn active" data-filter="all">すべて</button>
+          <button class="filter-btn" data-filter="alcohol">禁酒</button>
+          <button class="filter-btn" data-filter="workout">筋トレ</button>
+          <button class="filter-btn" data-filter="fx">FX</button>
+          <button class="filter-btn" data-filter="missing">未入力</button>
+        </div>
+      </div>
       <div class="card">
         <div class="weekdays">
           <div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div><div>日</div>
@@ -529,6 +638,18 @@
           <h2 class="section-title">週間サマリー</h2>
           <div class="summary-meta" id="weekRangeLabel">月〜日</div>
         </div>
+        <div class="period-controls">
+          <button class="icon-btn" id="prevWeek" aria-label="前週">‹</button>
+          <div class="period-main">
+            <input class="period-input" type="date" id="summaryWeekDate" />
+            <button class="mini-action" id="thisWeekBtn">今週</button>
+          </div>
+          <button class="icon-btn" id="nextWeek" aria-label="次週">›</button>
+        </div>
+
+        <div class="sub-title">週間目標</div>
+        <div class="goal-grid" id="weeklyGoals"></div>
+
         <div class="stats-grid">
           <div class="stat-box alcohol">
             <h3>禁酒達成日数</h3>
@@ -560,6 +681,15 @@
           <h2 class="section-title">月次サマリー</h2>
           <div class="summary-meta" id="monthRangeLabel">今月</div>
         </div>
+        <div class="period-controls">
+          <button class="icon-btn" id="prevSummaryMonth" aria-label="前月">‹</button>
+          <div class="period-main">
+            <input class="period-input" type="month" id="summaryMonthInput" />
+            <button class="mini-action" id="thisMonthSummaryBtn">今月</button>
+          </div>
+          <button class="icon-btn" id="nextSummaryMonth" aria-label="次月">›</button>
+        </div>
+
         <div class="stats-grid">
           <div class="stat-box alcohol">
             <h3>禁酒達成日数</h3>
@@ -630,7 +760,7 @@
         </div>
 
         <div class="helper-box">
-          CSVは日本語列名で出力。AI説明は別テキストで出力。未入力と「なし」は別扱い。v3では旧バージョンの記録も自動引継ぎ対応。
+          CSVは日本語列名で出力。AI説明は別テキストで出力。未入力と「なし」は別扱い。v4では旧バージョンの記録引継ぎ、表示フィルター、週/月の期間変更に対応。
         </div>
       </div>
     </section>
@@ -644,6 +774,7 @@ const OLD_KEYS = [
   'shota_habit_calendar_v1_html',
   'shota_habit_calendar_v2',
   'shota_habit_calendar_v2_1',
+  'shota_habit_calendar_v3',
 ];
 
 
@@ -677,6 +808,15 @@ const OLD_KEYS = [
       selectedDate: formatDate(new Date()),
       screen: 'calendar',
       migratedFrom: null,
+      calendarFilter: 'all',
+      summaryWeekDate: formatDate(new Date()),
+      summaryMonth: startOfMonth(new Date()),
+    };
+
+    const weeklyGoals = {
+      alcohol: { label: '禁酒', goal: 6, className: 'alcohol' },
+      workout: { label: '筋トレ', goal: 2, className: 'workout' },
+      fx: { label: 'FX勉強', goal: 7, className: 'fx' },
     };
 
     const $ = (id) => document.getElementById(id);
@@ -824,27 +964,37 @@ function isToday(dateStr) {
     }
 
     function getMonthRecords() {
-  const start = startOfMonth(state.currentMonth);
-  const end = endOfMonth(state.currentMonth);
-  const records = [];
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    records.push(getRecord(formatDate(d)));
-  }
-  return records;
-}
+      return getMonthRecordsFor(state.currentMonth);
+    }
 
-function daysInMonth(date) {
-  return endOfMonth(date).getDate();
-}
+    function getMonthRecordsFor(monthDate) {
+      const start = startOfMonth(monthDate);
+      const end = endOfMonth(monthDate);
+      const records = [];
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        records.push(getRecord(formatDate(d)));
+      }
+      return records;
+    }
 
-function getWeekBounds(dateStr) {
-  const base = parseDateKey(dateStr);
-  const start = new Date(base);
-  start.setDate(base.getDate() - mondayIndex(base));
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  return { start, end };
-}
+    function daysInMonth(date) {
+      return endOfMonth(date).getDate();
+    }
+
+    function addDays(date, diff) {
+      const d = new Date(date);
+      d.setDate(d.getDate() + diff);
+      return d;
+    }
+
+    function getWeekBounds(dateStr) {
+      const base = parseDateKey(dateStr);
+      const start = new Date(base);
+      start.setDate(base.getDate() - mondayIndex(base));
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      return { start, end };
+    }
 
 function summarizeRecords(records) {
   return {
@@ -867,15 +1017,15 @@ function summarizeRecords(records) {
 }
 
 function summarizeMonth() {
-  const records = getMonthRecords();
+  const records = getMonthRecordsFor(state.summaryMonth);
   return {
-    totalDays: daysInMonth(state.currentMonth),
+    totalDays: daysInMonth(state.summaryMonth),
     ...summarizeRecords(records),
   };
 }
 
 function summarizeWeek() {
-  const { start, end } = getWeekBounds(state.selectedDate);
+  const { start, end } = getWeekBounds(state.summaryWeekDate);
   const records = [];
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     records.push(getRecord(formatDate(d)));
@@ -885,6 +1035,15 @@ function summarizeWeek() {
     end,
     totalDays: 7,
     ...summarizeRecords(records),
+  };
+}
+
+function goalStatus(actual, goal) {
+  const remaining = Math.max(goal - actual, 0);
+  return {
+    ratio: Math.min(actual / goal, 1),
+    text: remaining === 0 ? '達成' : `あと${remaining}日`,
+    done: remaining === 0,
   };
 }
 
@@ -970,20 +1129,25 @@ function sortedRecords() {
         const inMonth = date.getMonth() === state.currentMonth.getMonth();
         const missing = hasMissing(record, dateStr);
         const selected = state.selectedDate === dateStr;
+        const filter = state.calendarFilter;
+        const showAlcohol = (filter === 'all' || filter === 'alcohol') && alcoholPositive(record);
+        const showWorkout = (filter === 'all' || filter === 'workout') && workoutPositive(record);
+        const showFx = (filter === 'all' || filter === 'fx') && fxPositive(record);
+        const showMissing = (filter === 'all' || filter === 'missing') && missing;
 
         const cell = document.createElement('button');
-        cell.className = `day-cell${inMonth ? '' : ' outside'}${isToday(dateStr) ? ' today' : ''}${missing ? ' missing' : ''}${selected ? ' selected' : ''}`;
+        cell.className = `day-cell${inMonth ? '' : ' outside'}${isToday(dateStr) ? ' today' : ''}${showMissing ? ' missing' : ''}${selected ? ' selected' : ''}`;
         cell.type = 'button';
         cell.innerHTML = `
           <div class="day-top">
             <div class="day-num">${date.getDate()}</div>
-            ${missing ? '<div class="red-dot"></div>' : '<div style="width:7px;height:7px"></div>'}
+            ${showMissing ? '<div class="red-dot"></div>' : '<div style="width:7px;height:7px"></div>'}
           </div>
           <div class="dots">
-            ${alcoholPositive(record) ? '<div class="dot alcohol"></div>' : ''}
-            ${workoutPositive(record) ? '<div class="dot workout"></div>' : ''}
-            ${fxPositive(record) ? '<div class="dot fx"></div>' : ''}
-            ${missing ? '<div class="dot missing"></div>' : ''}
+            ${showAlcohol ? '<div class="dot alcohol"></div>' : ''}
+            ${showWorkout ? '<div class="dot workout"></div>' : ''}
+            ${showFx ? '<div class="dot fx"></div>' : ''}
+            ${showMissing ? '<div class="dot missing"></div>' : ''}
           </div>
         `;
         cell.addEventListener('click', () => {
@@ -991,6 +1155,12 @@ function sortedRecords() {
           render();
         });
         grid.appendChild(cell);
+      });
+    }
+
+    function renderFilters() {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === state.calendarFilter);
       });
     }
 
@@ -1036,6 +1206,28 @@ function sortedRecords() {
   const month = summarizeMonth();
 
   $('weekRangeLabel').textContent = weekRangeLabel(week.start, week.end);
+  $('summaryWeekDate').value = state.summaryWeekDate;
+
+  const goalRows = [
+    { key: 'alcohol', actual: week.alcohol, ...weeklyGoals.alcohol },
+    { key: 'workout', actual: week.workout, ...weeklyGoals.workout },
+    { key: 'fx', actual: week.fx, ...weeklyGoals.fx },
+  ];
+  $('weeklyGoals').innerHTML = goalRows.map(goal => {
+    const result = goalStatus(goal.actual, goal.goal);
+    return `
+      <div class="goal-card">
+        <div class="goal-top">
+          <div>
+            <div class="goal-name">${goal.label}</div>
+            <div class="goal-message${result.done ? ' done' : ''}">${result.text}</div>
+          </div>
+          <div class="goal-value">${goal.actual}/${goal.goal}</div>
+        </div>
+        <div class="goal-bar"><div class="goal-fill ${goal.className}" style="width:${Math.round(result.ratio * 100)}%"></div></div>
+      </div>`;
+  }).join('');
+
   $('weekAlcohol').textContent = `${week.alcohol}/${week.totalDays}`;
   $('weekWorkout').textContent = `${week.workout}/${week.totalDays}`;
   $('weekFx').textContent = `${week.fx}/${week.totalDays}`;
@@ -1045,7 +1237,8 @@ function sortedRecords() {
   $('weekFxBreakdown').innerHTML = Object.entries(week.fxBreakdown)
     .map(([k, v]) => `<div class="mini-pill fx">${k} ${v}日</div>`).join('');
 
-  $('monthRangeLabel').textContent = `${jpMonth(state.currentMonth)}（全${month.totalDays}日）`;
+  $('summaryMonthInput').value = `${state.summaryMonth.getFullYear()}-${String(state.summaryMonth.getMonth() + 1).padStart(2, '0')}`;
+  $('monthRangeLabel').textContent = `${jpMonth(state.summaryMonth)}（全${month.totalDays}日）`;
   $('monthAlcohol').textContent = `${month.alcohol}/${month.totalDays}`;
   $('monthWorkout').textContent = `${month.workout}/${month.totalDays}`;
   $('monthFx').textContent = `${month.fx}/${month.totalDays}`;
@@ -1067,6 +1260,7 @@ function renderTabs() {
 
     function render() {
       renderTabs();
+      renderFilters();
       renderCalendar();
       renderSelectedDay();
       renderSummary();
@@ -1163,6 +1357,51 @@ function renderTabs() {
           state.screen = btn.dataset.screen;
           renderTabs();
         });
+      });
+
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.calendarFilter = btn.dataset.filter;
+          render();
+        });
+      });
+
+      $('prevWeek').addEventListener('click', () => {
+        state.summaryWeekDate = formatDate(addDays(parseDateKey(state.summaryWeekDate), -7));
+        render();
+      });
+      $('nextWeek').addEventListener('click', () => {
+        state.summaryWeekDate = formatDate(addDays(parseDateKey(state.summaryWeekDate), 7));
+        render();
+      });
+      $('thisWeekBtn').addEventListener('click', () => {
+        state.summaryWeekDate = formatDate(new Date());
+        render();
+      });
+      $('summaryWeekDate').addEventListener('change', (e) => {
+        if (e.target.value) {
+          state.summaryWeekDate = e.target.value;
+          render();
+        }
+      });
+
+      $('prevSummaryMonth').addEventListener('click', () => {
+        state.summaryMonth = addMonths(state.summaryMonth, -1);
+        render();
+      });
+      $('nextSummaryMonth').addEventListener('click', () => {
+        state.summaryMonth = addMonths(state.summaryMonth, 1);
+        render();
+      });
+      $('thisMonthSummaryBtn').addEventListener('click', () => {
+        state.summaryMonth = startOfMonth(new Date());
+        render();
+      });
+      $('summaryMonthInput').addEventListener('change', (e) => {
+        if (!e.target.value) return;
+        const [y, m] = e.target.value.split('-').map(Number);
+        state.summaryMonth = new Date(y, m - 1, 1);
+        render();
       });
 
       $('exportMonthCsv').addEventListener('click', () => exportCsv('month'));
